@@ -1,0 +1,35 @@
+/// <summary>
+///
+/// </summary>
+public class <%= it.name %>SummaryRepresentation : Representation
+{
+    private readonly ILinkHelperProvider link;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<%= it.name %>SummaryRepresentation" /> class.
+    /// </summary>
+    /// <param name="linkHelper"></param>
+    /// <param name="entity"></param>
+    public <%= it.name %>SummaryRepresentation(ILinkHelperProvider linkHelper, <%= it.name %>Summary entity)
+    {
+        link = linkHelper;
+        Rel = <%= it.pluralName %>Controller.GetByID;
+<%= it.getAssignmentProperties(it.columns, 2)%>;
+    }
+    
+<%~ it.getJsonProperties(it.columns) %>
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    protected override void CreateHypermedia()
+    {
+        Href = link.GetSelfLink(Rel, new { id = <%= it.name %>ID });
+        Links = new List<Link>
+        {
+            (new CuriesLink("help", link.GetHelpPageLink())).ToLink(),
+            new Link(<%= it.pluralName %>Controller.UpdateEntity, link.GetSelfLink(<%= it.pluralName %>Controller.UpdateEntity, new { id = <%= it.name %>ID }), "update")
+        };
+    }
+}`;

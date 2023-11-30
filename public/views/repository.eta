@@ -1,0 +1,165 @@
+public interface I<%= it.name %>Repository
+{
+    List<<%= it.name %>Summary> GetAll(<%= it.name %>SearchParams searchParams);
+
+    <%= it.name %>? GetByID(int <%= it.getCamelCaseString(it.identityColumn) %>);
+
+    bool Insert(<%= it.name %> entity);
+
+    bool Update(<%= it.name %> entity);
+
+<% if(it.customText) { %>
+    bool Delete(int <%= it.getCamelCaseString(it.identityColumn) %>);
+
+    bool InsertCustomText(List<<%= it.name %>CustomText> customTexts);
+
+    bool UpdateCustomText(List<<%= it.name %>CustomText> customTexts);
+
+    List<<%= it.name %>CustomText> GetCustomTextByID(int <%= it.getCamelCaseString(it.identityColumn) %>);
+
+    bool DeleteCustomText(List<int> customTextIds);
+<% } %>
+}
+
+public class <%= it.name %>Repository : I<%= it.name %>Repository
+{
+    private readonly IConnectionString connectionString;
+
+    public <%= it.name %>Repository(IConnectionString connectionString)
+    {
+        this.connectionString = connectionString;
+    }
+
+    public DefaultDataContext Context()
+    {
+        return new DefaultDataContext(connectionString.MemoryCache, connectionString.ConnectionString, "<%= it.name %>Repository");
+    }
+
+    public List<<%= it.name %>Summary> GetAll(<%= it.name %>SearchParams searchParams)
+    {
+        using var db = Context();
+        var query = db.GetResource("GetAll");
+<% if(it.compileExpression) { %>
+        var orderByExpression = CompileOrderByExpression(searchParams.OrderBy);
+        query += $"{Environment.NewLine}order by {orderByExpression}";
+        query += $"{Environment.NewLine}offset {searchParams.Offset} rows ";
+        query += $"{Environment.NewLine}fetch next {searchParams.Limit} rows only ";
+<% } %>
+
+        return db.Connection.Query<<%= it.name %>Summary>(query, searchParams).ToList();
+    }
+    
+    public <%= it.name %>? GetByID(int <%= it.getCamelCaseString(it.identityColumn) %>)
+    {
+        using var db = Context();
+        var query = db.GetResource("GetByID");
+
+        return db.Connection.QuerySingleOrDefault<<%= it.name %>>(query, new { <%= it.getCamelCaseString(it.identityColumn) %> });
+    }
+
+    public bool Insert(<%= it.name %> entity)
+    {
+        using var db = Context();
+        var query = db.GetResource("Insert");
+        var <%= it.getCamelCaseString(it.identityColumn) %> = db.Connection.ExecuteScalar<int>(query, entity);
+        entity.<%= it.identityColumn %> = <%= it.getCamelCaseString(it.identityColumn) %>;
+
+        return <%= it.getCamelCaseString(it.identityColumn) %> > 0;
+    }
+
+    public bool Update(<%= it.name %> entity)
+    {
+        using var db = Context();
+        var query = db.GetResource("Update");
+        var rows = db.Connection.Execute(query, entity);
+
+        return rows > 0;
+    }
+
+     public bool Delete(int <%= it.getCamelCaseString(it.identityColumn) %>)
+    {
+        using var db = Context();
+        var query = db.GetResource("Delete");
+        var rows = db.Connection.Execute(query, new { <%= it.getCamelCaseString(it.identityColumn) %> });
+
+        return rows > 0;
+    }
+<% if(it.customText) { %>
+
+    public bool DeleteCustomText(List<int> customTextIds)
+    {
+        if (customTextIds.Count == 0)
+        {
+            return true;
+        }
+
+        using var db = Context();
+        var query = db.GetResource("DeleteCustomText");
+        var rows = db.Connection.Execute(query, new { ids = customTextIds });
+
+        return rows > 0;
+    }
+
+    public List<<%= it.name %>CustomText> GetCustomTextByID(int <%= it.getCamelCaseString(it.identityColumn) %>)
+    {
+        using var db = Context();
+        var query = db.GetResource("GetCustomTextByID");
+
+        return db.Connection.Query<<%= it.name %>CustomText>(query, new { <%= it.getCamelCaseString(it.identityColumn) %> }).ToList();
+    }
+ 
+    public bool InsertCustomText(List<<%= it.name %>CustomText> customTexts)
+    {
+        var result = true;
+
+        foreach (var entity in customTexts)
+        {
+            using var db = Context();
+            var query = db.GetResource("InsertCustomText");
+            var customTextId = db.Connection.Query<int>(query, entity).FirstOrDefault();
+            entity.<%= it.name %>CustomTextID = customTextId;
+
+            result &= customTextId > 0;
+        }
+
+        return result;
+    }
+
+    public bool UpdateCustomText(List<<%= it.name %>CustomText> customTexts)
+    {
+        var result = true;
+
+        foreach (var entity in customTexts)
+        {
+            using var db = Context();
+            var query = db.GetResource("UpdateCustomText");
+            var rows = db.Connection.Execute(query, entity);
+
+            result &= rows > 0;
+        }
+
+        return result;
+    }
+<% if(it.compileExpression) {%><%= "\n" %><% } %>
+<% } %>
+<% if(it.compileExpression) { %>
+<% if(!it.customText) {%><%= "\n" %><% } %>
+    private static string CompileOrderByExpression(string? orderBy)
+    {
+        if (string.IsNullOrWhiteSpace(orderBy))
+        {
+            return "<%= it.name %>.<%= it.identityColumn %> asc";
+        }
+
+        var expression = orderBy.Split('.');
+        var column = expression.FirstOrDefault()?.ToLower();
+        var direction = expression.Length > 1 && expression.LastOrDefault() == "desc" ? "desc" : "asc";
+
+        return column switch
+        {
+<%~ it.getSwitchExpression(it.columns, it.name) %>,
+            _ => "<%= it.name %>.<%= it.identityColumn %> asc"
+        };
+    }
+<% } %>
+}

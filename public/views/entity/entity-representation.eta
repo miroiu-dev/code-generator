@@ -1,0 +1,81 @@
+/// <summary>
+///
+/// </summary>
+public class <%= it.name %>Representation : BaseRepresentation
+{   
+    private readonly ILinkHelperProvider link;
+    private readonly int id;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<%= it.name %>Representation" /> class.
+    /// </summary>
+    /// <param name="linkHelper"></param>
+    /// <param name="entity"></param>
+<% if(it.customText) { %>
+    /// <param name="customTexts"></param>
+<% } %>
+    public <%= it.name %>Representation(ILinkHelperProvider linkHelper, <%= it.name %> entity<% if(it.customText) { %>, List<<%= it.name %>CustomText> customTexts<% } %>)
+    {
+        link = linkHelper;
+        Rel = <%= it.pluralName %>Controller.GetByID;
+        NotificationStatus = StatusCode.Success;
+        id = entity.<%= it.name %>ID;
+<% if(it.customText) { %>
+        <%= it.name %>CustomTexts = customTexts;
+<% } %>
+<%= it.getAssignmentProperties(it.columns, 2)%>;
+	}
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<%= it.name %>Representation" /> class.
+    /// </summary>
+    /// <param name="linkHelper"></param>
+    /// <param name="id"></param>
+    /// <param name="status"></param>
+    /// <param name="message"></param>
+    public <%= it.name %>Representation(ILinkHelperProvider linkHelper, int id, StatusCode status, string message)
+    {
+        link = linkHelper;
+        this.id = id;
+        NotificationStatus = status;
+        NotificationMessage = message;
+    }
+    
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<%= it.name %>Representation" /> class.
+    /// </summary>
+    /// <param name="linkHelper"></param>
+    /// <param name="status"></param>
+    /// <param name="message"></param>
+    public <%= it.name %>Representation(ILinkHelperProvider linkHelper, StatusCode status, string message)
+    {
+        link = linkHelper;
+        NotificationStatus = status;
+        NotificationMessage = message;
+    }
+	
+<%~ it.getJsonProperties(it.columns) %>
+
+
+<% if(it.customText) { %>
+    /// <summary>
+    /// Gets or sets <%= it.name %>CustomTexts
+    /// </summary>
+    [JsonProperty("<%= it.getCamelCaseString(it.name) %>CustomTexts")]
+    public List<<%= it.name %>CustomTextRepresentation>? <%= it.name %>CustomTexts { get; set; }
+
+<% } %>
+    /// <summary>
+    ///
+    /// </summary>
+    protected override void CreateHypermedia()
+    {
+        Href = link.GetSelfLink(Rel, new { id });
+        Links = new List<Link> 
+        {
+            (new CuriesLink("help", link.GetHelpPageLink())).ToLink(),
+            new(<%= it.pluralName %>Controller.UpdateEntity, link.GetSelfLink(<%= it.pluralName %>Controller.UpdateEntity, new { id }), "update"),
+            new(<%= it.pluralName %>Controller.DeleteEntity, link.GetSelfLink(<%= it.pluralName %>Controller.DeleteEntity, new { id }), "delete") 
+        };
+    }   
+}

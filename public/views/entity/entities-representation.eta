@@ -1,0 +1,97 @@
+/// <summary>
+///
+/// </summary>
+public class <%= it.pluralName %>Representation : BaseRepresentation
+{
+    private readonly ILinkHelperProvider link;
+<% if(it.pagination) { %>
+    private readonly int offset;
+    private readonly int limit;
+    private readonly bool hasExtraPages = false;
+<% } %>
+
+    /// <summary>
+    /// List of <%= it.pluralName %>
+
+    /// </summary>
+    [JsonProperty("<%= it.getCamelCaseString(it.pluralName) %>")]
+    public List<<%= it.name %>Representation> <%= it.pluralName %> { get; private set; }
+  
+<% if(it.pagination) { %>
+    /// <summary>
+    /// Get/Set Total Count
+    /// </summary>
+    [JsonProperty("totalCount")]
+    public int TotalCount { get; set; }
+
+<% } %>
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<%= it.pluralName %>Representation" /> class.
+    /// </summary>
+    /// <param name="linkHelper"></param>
+    /// <param name="entities"></param>
+<% if(it.pagination) { %>
+    /// <param name="offset"></param>
+    /// <param name="limit"></param>`
+<% } %>
+    public <%= it.pluralName %>Representation(ILinkHelperProvider linkHelper, List<<%= it.name %>Summary> entities<% if(it.pagination) { %><%= ", int offset, int limit" %><% }%>)
+    {
+        link = linkHelper;
+        Rel = <%= it.pluralName %>Controller.GetAll;
+        <%= it.pluralName %> = entities.Select(x => new <%= it.name %>SummaryRepresentation(link, x)).ToList();
+<% if(it.pagination) { %>
+        TotalCount = entities.Count > 0 ? entities.FirstOrDefault()?.TotalCount ?? 0 : 0;
+        hasExtraPages = entities.Count > offset;
+        this.offset = offset;
+        this.limit = limit;
+        NotificationStatus = StatusCode.Success;
+<% } %>
+    }
+    
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<%= it.pluralName %>Representation" /> class.
+    /// </summary>
+    /// <param name="linkHelper"></param>
+    /// <param name="status"></param>
+    /// <param name="message"></param>
+    public <%= it.pluralName %>SummaryRepresentation(ILinkHelperProvider linkHelper, StatusCode status, string message)
+    {
+        link = linkHelper;
+        Rel = <%= it.pluralName %>Controller.GetAll;
+        <%= it.pluralName %> = new List<<%= it.name %>SummaryRepresentation>();
+        NotificationStatus = status;
+        NotificationMessage = message;
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    protected override void CreateHypermedia()
+    {
+        dynamic parameters = new ExpandoObject();
+<% if(it.pagination) { %>            
+        parameters.offset = offset;
+        parameters.limit = limit;
+<% } %>
+        Links = new List<Link> 
+        {
+            (new CuriesLink("help", link.GetHelpPageLink())).ToLink(),
+            new(<%= it.pluralName %>Controller.InsertNew, link.GetSelfLink(<%= it.pluralName %>Controller.InsertNew), "insert")
+        };
+<% if(it.pagination) { %>
+
+        if(hasExtraPages)
+        {
+            parameters.offset = offset + limit;
+            Links.Add(new(Rel, link.GetSelfLink(Rel, parameters), "next"));
+        }
+                    
+        if (offset > 0)
+        {
+            parameters.offset = offset - limit;
+            Links.Add(new(Rel, link.GetSelfLink(Rel, parameters), "prev"));
+        }
+<% } %>
+	}
+}
+    

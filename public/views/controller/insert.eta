@@ -1,0 +1,46 @@
+/// <summary>
+/// Insert entity of type <%= it.name + '\n'%>
+/// </summary>
+/// <param name="payload">Entity to insert</param>
+/// <response code="200">Returns entity of type <%= it.name %></response>
+/// <response code="401">Unauthorized response if token has expired</response>
+/// <response code="304">Forbidden for unauthorized roles</response>
+[Route("api/<%= it.getUriSegment(it.pluralName) %>", Name = InsertNew)]
+[Authorize(Roles = "Administrator,BrandManager")]
+[HttpPost]
+public <%= it.name %>Representation Post([FromBody] <%= it.name %>Model payload)
+{
+    try
+    {
+        if (!ModelState.IsValid)
+        {
+            Response.StatusCode = (int)HttpStatusCode.NotAcceptable;
+
+            return new <%= it.name %>Representation(LinkHelper, 0, BaseRepresentation.StatusCode.Warning, string.Join(Environment.NewLine, ModelState.GetErrors()));
+        }
+
+        var entity = payload.GetEntity();
+
+        if (<%= it.getCamelCaseString(it.name) %>Service.Insert(entity))
+        {
+            return new <%= it.name %>Representation(LinkHelper, entity<% if(it.customText) { %>, entity.<%= it.name %>CustomTexts ?? new List<<%= it.name %>CustomText>()<% } %>);
+        }
+
+        var message = Resources.ErrorMessages.CouldNotBeCreated;
+
+        if (!string.IsNullOrEmpty(<%= it.getCamelCaseString(it.name) %>Service.ErrorMessage))
+        {
+            message = <%= it.getCamelCaseString(it.name) %>Service.ErrorMessage;
+        }
+
+        Response.StatusCode = (int)HttpStatusCode.NotAcceptable;
+
+        return new <%= it.name %>Representation(LinkHelper, BaseRepresentation.StatusCode.Warning, message);
+    }
+    catch(Exception ex)
+    {
+        Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+     
+        return new <%= it.name %>Representation(LinkHelper, 0, BaseRepresentation.StatusCode.Error, ex.Message + Environment.NewLine + ex.StackTrace);
+    }
+}

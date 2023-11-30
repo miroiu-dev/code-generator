@@ -1,0 +1,41 @@
+/// <summary>
+/// Remove entity by <%= it.name %>ID
+/// </summary>
+/// <param name="id">Unique identity for <%= it.name %></param>
+/// <response code="200">Returns entity of type <%= it.name %></response>
+/// <response code="401">Unauthorized response if token has expired</response>
+/// <response code="304">Forbidden for unauthorized roles</response>
+/// <returns></returns>
+[Route("api/<%= it.getUriSegment(it.pluralName) %>/{id}", Name = DeleteEntity)]
+[Authorize(Roles = "Administrator,BrandManager")]
+[HttpDelete]
+public <%= it.name %>Representation Delete(int id)
+{
+    try
+    {
+        if (id <= 0)
+        {
+            return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Warning, string.Format(Resources.ErrorMessages.EntityNotFound, id));
+        }
+
+        if (<%= it.getCamelCaseString(it.name) %>Service.Delete(id))
+        {
+            return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Success, Resources.ErrorMessages.EntityWasDeleted);
+        }
+
+        var message = Resources.ErrorMessages.CouldNotBeDeleted;
+
+        if (!string.IsNullOrEmpty(<%= it.getCamelCaseString(it.name) %>Service.ErrorMessage))
+        {
+            message = <%= it.getCamelCaseString(it.name) %>Service.ErrorMessage;
+        }
+        
+        return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Warning, message);
+    }
+    catch (Exception ex)
+    {
+        Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+        return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Error, ex.Message + Environment.NewLine + ex.StackTrace);
+    }
+}

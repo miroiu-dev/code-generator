@@ -1,0 +1,12 @@
+insert into <%= it.name %>
+
+(
+<%= it.getColumnsWithoutID(it.columns) %>
+
+)
+values
+(
+<%= it.getColumnsWithoutID(it.columns, true) %>
+
+);
+select cast(scope_identity() as int);

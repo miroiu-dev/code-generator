@@ -1,0 +1,13 @@
+select
+<%= it.getColumns(it.columns) %><%= it.pagination ? ',' : ''%>
+
+<% if (it.pagination === true) { %>
+    count(*) as TotalCount
+<% } %>
+from <%= it.name %><%= !it.pagination ? ';' : ''%>
+
+<% if (it.pagination === true) { %>
+order by <%= it.identityColumn%> desc
+offset @Offset rows
+fetch next @Limit rows only;
+<% } %>

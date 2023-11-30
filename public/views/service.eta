@@ -1,0 +1,180 @@
+public static class <%= it.name %>Extension
+{
+    public static <%= it.name %> MapFields(this <%= it.name %> current, <%= it.name %> entity)
+    {
+<%= it.getExtensionAssignment(it.columns) %>;
+
+        return current;
+    }
+}
+
+public interface I<%= it.name %>Service
+{
+    string? ErrorMessage { get; }
+
+    public List<<%= it.pluralName %>Summary> GetAll(<%= it.name %>SearchParams searchParams);
+
+    bool Delete(int id);
+
+    bool Insert(<%= it.name %> entity);
+
+    public bool Update(<%= it.name %> entity);
+}
+
+public class <%= it.name %>Service : I<%= it.name %>Service
+{
+    private readonly I<%= it.name %>Repository <%= it.getCamelCaseString(it.name) %>Repository;
+
+    public <%= it.name %>Service(I<%= it.name %>Repository <%= it.getCamelCaseString(it.name) %>Repository)
+    {
+        this.<%= it.getCamelCaseString(it.name) %>Repository = <%= it.getCamelCaseString(it.name) %>Repository;
+    }
+
+    public string? ErrorMessage { get; private set; }
+
+    public List<<%= it.pluralName %>Summary> GetAll(<%= it.name %>SearchParams searchParams)
+    {
+        // logic...
+        var entities = <%= it.getCamelCaseString(it.name) %>Repository.GetAll(searchParams);
+
+        return entities;
+    }
+
+    public bool Insert(<%= it.name %> entity)
+    {
+        if (!isValid(entity))
+        {
+           return false;
+        }
+
+        bool inserted = <%= it.getCamelCaseString(it.name) %>Repository.Insert(entity);
+
+        if (!inserted)
+        {
+            ErrorMessage = string.Format(BusinessErrorMessages.InsertFailed, "<%= it.name %>");
+            
+            return false;
+        }
+<% if(it.customText) { %>
+
+        var customTextInserted = true;
+
+        if (entity.<%= it.name %>CustomTexts is not null && entity.<%= it.identityColumn %> > 0)
+        {
+            entity.<%= it.name %>CustomTexts.ForEach(x => x.<%= it.identityColumn %> = entity.<%= it.identityColumn %>);
+            customTextInserted &= <%= it.getCamelCaseString(it.name) %>Repository.InsertCustomText(entity.<%= it.name %>CustomTexts);
+        }
+
+        if (!customTextInserted)
+        {
+            ErrorMessage = string.Format(BusinessErrorMessages.InsertFailed, "<%= it.name %>");
+
+            return false;
+        }
+<% } %>
+
+        return true;
+    }
+
+    public bool Update(<%= it.name %> entity)
+    {
+        if (!isValid(entity))
+        {
+           return false;
+        }
+
+        var <%= it.getCamelCaseString(it.name) %> = <%= it.getCamelCaseString(it.name) %>Repository.GetByID(entity.<%= it.identityColumn %>);
+
+        if (<%= it.getCamelCaseString(it.name) %> is null)
+        {
+            ErrorMessage = string.Format(BusinessErrorMessages.UpdateFailed, "<%= it.name %>");
+
+            return false;
+        }
+    
+        var updated = <%= it.getCamelCaseString(it.name) %>Repository.Update(<%= it.getCamelCaseString(it.name) %>.MapFields(entity));
+
+        if (!updated)
+        {
+            ErrorMessage = string.Format(BusinessErrorMessages.InsertFailed, "<%= it.name %>");
+
+            return false;
+        }
+
+<% if(it.customText) { %>
+        var customTextUpdated = true;
+
+        if (entity.<%= it.name %>CustomTexts is not null)
+        {
+            var toUpdate = entity.<%= it.name %>CustomTexts.Where(x => x.<%= it.name %>CustomTextID > 0).ToList();
+            var toInsert = entity.<%= it.name %>CustomTexts.Where(x => x.<%= it.name %>CustomTextID == 0).ToList();
+
+            if (toUpdate.Count > 0)
+            {
+                toUpdate.ForEach(x => x.<%= it.identityColumn %> = entity.<%= it.identityColumn %>);
+                customTextUpdated &= <%= it.getCamelCaseString(it.name) %>Repository.UpdateCustomText(toUpdate);
+            }
+
+            if (toInsert.Count > 0)
+            {
+                toInsert.ForEach(x => x.<%= it.identityColumn %> = entity.<%= it.identityColumn %>);
+                customTextUpdated &= <%= it.getCamelCaseString(it.name) %>Repository.InsertCustomText(toInsert);
+            }
+        }
+
+        var oldCustomTexts = <%= it.getCamelCaseString(it.name) %>Repository.GetCustomTextByID(entity.<%= it.identityColumn %>);
+        var newCustomTexts = entity.<%= it.name %>CustomTexts is not null ? entity.<%= it.name %>CustomTexts.Select(x => x.<%= it.name %>CustomTextID) : Enumerable.Empty<int>();
+        var removedCustomTexts = oldCustomTexts.Where(x => !newCustomTexts.Contains(x.<%= it.name %>CustomTextID)).Select(x => x.<%= it.name %>CustomTextID).ToList();
+        
+        if (removedCustomTexts.Count > 0)
+        {
+            customTextUpdated &= <%= it.getCamelCaseString(it.name) %>Repository.DeleteCustomText(removedCustomTexts);
+        }
+<% } %>
+        return updated<% if(it.customText) { %> && customTextUpdated <% } %>;
+    }
+
+    public bool Delete(int <%= it.getCamelCaseString(it.identityColumn) %>)
+    {
+        // logic... 
+
+        return <%= it.getCamelCaseString(it.name) %>Repository.Delete(<%= it.getCamelCaseString(it.identityColumn) %>);
+    }
+<% if(it.customText) { %>
+
+    private List<int> GetDuplicateCustomTextIds(<%= it.name %> entity)
+    {
+        var duplicateEntities = new List<int>();
+
+        if (entity.<%= it.name %>CustomTexts is not null)
+        {
+            foreach (var groups in entity.<%= it.name %>CustomTexts.GroupBy(x => x.AgencyID))
+            {
+                if (groups.Count() > 1)
+                {
+                    duplicateEntities.Add(groups.First().AgencyID);
+                }
+            }
+        }
+
+        return duplicateEntities;
+    }
+<% } %>
+
+    private static bool IsValid(<%= it.name%> entity)
+    {
+<% if(it.customText) { %>
+        List<int> duplicateIds = GetDuplicateCustomTextIds(entity);
+
+        if (duplicateIds.Count > 0)
+        {
+            ErrorMessage = string.Format(BusinessErrorMessages.DuplicateEntities, "AgencyID", string.Join(",", duplicateIds));
+           
+            return false;
+        }  
+<% } %>
+        // logic...
+
+        return true;
+    }
+}

@@ -1,0 +1,24 @@
+/// <summary>
+/// Route name for get all
+/// </summary>
+public const string GetAll = "help:<%= it.getUriSegment(it.pluralName) %>-get-all";
+
+/// <summary>
+/// Route name for get one entity
+/// </summary>
+public const string GetByID = "help:<%= it.getUriSegment(it.pluralName) %>-get";
+
+/// <summary>
+/// Route name for insert one entity
+/// </summary>
+public const string InsertNew = "help:<%= it.getUriSegment(it.pluralName) %>-insert";
+
+/// <summary>
+/// Route name for update one entity
+/// </summary>
+public const string UpdateEntity = "help:<%= it.getUriSegment(it.pluralName) %>-update";
+    
+/// <summary>
+/// Route name for delete one entity
+/// </summary>
+public const string DeleteEntity = "help:<%= it.getUriSegment(it.pluralName) %>-delete";

@@ -1,0 +1,9 @@
+public class <%= it.name %>
+
+{
+<%~ it.columns.map(c => `\t${it.getProperty(c)}`).join(it.space ? "\n\n" : "\n") %>	
+<% if(it.customText) { %>
+<% if(it.space) { %> <%= "\n" %><% } %>
+    public List<<%= it.name%>CustomText>? <%= it.name %>CustomTexts { get; set; }
+<% } %>
+}

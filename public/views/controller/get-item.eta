@@ -1,0 +1,31 @@
+/// <summary>
+/// Get and entity of type <%= it.name %> from collection
+/// </summary>
+/// <param name="id">Unique identity for <%= it.name %></param>
+/// <response code="200">Returns one entity</response>
+/// <response code="401">Unauthorized response if token has expired</response>
+/// <response code="304">Forbidden for un authorized roles</response>
+[Route("api/<%= it.getUriSegment(it.pluralName) %>/{id}", Name = GetByID)]
+[Authorize(Roles = "Administrator,BrandManager")]
+[HttpGet]
+public <%= it.name %>Representation Get([FromRoute] int id)
+{
+    try
+    {
+        var entity = <%= it.getCamelCaseString(it.name) %>Repository.GetByID(id);
+
+        if(entity is null)
+        {
+            return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Warning, string.Format(Resources.ErrorMessages.EntityNotFound, id));
+        }
+       <% if(it.customText) { %><%= "\n\t\t"%>var <%= it.getCamelCaseString(it.name) %>CustomTexts = <%= it.getCamelCaseString(it.name) %>Repository.GetCustomTextByID(id); <%= "\n"%> <% } %>
+
+        return new <%= it.name %>Representation(LinkHelper, entity<% if(it.customText) { %>, <%= `${it.getCamelCaseString(it.name)}CustomTexts` %> ?? new List<<%= it.name %>CustomText>()<% } %>);
+    }
+    catch(Exception ex)
+    {
+        Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+        return new <%= it.name %>Representation(LinkHelper, BaseRepresentation.StatusCode.Error, ex.Message + Environment.NewLine + ex.StackTrace);
+    }
+}

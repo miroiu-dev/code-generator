@@ -1,0 +1,6 @@
+update <%= it.name %>
+
+set
+<%= it.getUpdateColumns(it.columns) %>
+
+where <%= it.getFilterByID(it.identityColumn) %>;

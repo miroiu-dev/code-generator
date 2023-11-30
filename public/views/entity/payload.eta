@@ -1,0 +1,31 @@
+/// <summary>
+///
+/// </summary>
+public class <%= it.name %>Model
+{
+<%~ it.getJsonPropertiesWithValidation(it.columns, it.name) %>
+
+
+<% if(it.customText) { %>
+    /// <summary>
+    /// Gets or sets <%= it.name %>CustomTexts
+    /// </summary>
+    [JsonProperty("<%= it.getCamelCaseString(it.name) %>CustomTexts")]
+    public List<<%= it.name %>CustomText>? <%= it.name %>CustomTexts { get; set; }
+
+<% } %>
+    /// <summary>
+    /// <returns>The <see cref="GetEntity"/> properties contained in <see cref="<%= it.name %>Model"/></returns>
+    /// </summary>
+    public <%= it.name %> GetEntity()
+    {
+        return new <%= it.name %>
+
+        {
+<% if(it.customText) { %>            <%= it.name %>CustomTexts = entity.<%= it.name %>CustomTexts,
+<% } %>
+<%= it.getAssignments(it.columns, 3, ',') %>
+
+        };
+    }
+}

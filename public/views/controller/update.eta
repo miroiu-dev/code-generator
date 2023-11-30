@@ -1,0 +1,48 @@
+/// <summary>
+/// Update <%= it.name %> entity
+/// </summary>
+/// <param name="id">id</param>
+/// <param name="payload">payload</param>
+/// <response code="200">Returns entity of type <%= it.name %></response>
+/// <response code="401">Unauthorized response if token has expired</response>
+/// <response code="304">Forbidden for unauthorized roles</response>
+[Route("api/<%= it.getUriSegment(it.pluralName) %>/{id}", Name = UpdateEntity)]
+[Authorize(Roles = "Administrator,BrandManager")]
+[HttpPut]
+public <%= it.name %>Representation Put([FromBody] <%= it.name %>Model payload, [FromRoute] int id)
+{
+    try
+    {
+        if (payload.<%= it.name %>ID != id)
+        {
+            return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Warning, string.Format(Resources.ErrorMessages.MissMatchValues, "id", "entity.<%= it.getCamelCaseString(it.name) %>ID"));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Warning, ResponseHelper.GetErrorMessage(ModelState));
+        }   
+
+        var entity = payload.GetEntity();
+        
+        if (<%= it.getCamelCaseString(it.name) %>Service.Update(entity))
+        {
+            return new <%= it.name %>Representation(LinkHelper, entity<% if(it.customText) { %>, entity.<%= it.name %>CustomTexts ?? new List<<%= it.name %>CustomText>()<% } %>);
+        }
+       
+        var message = Resources.ErrorMessages.CouldNotBeCreated;
+       
+        if (!string.IsNullOrEmpty(<%= it.getCamelCaseString(it.name) %>Service.ErrorMessage))
+        {
+            message = <%= it.getCamelCaseString(it.name) %>Service.ErrorMessage;
+        }
+       
+        return new <%= it.name %>Representation(LinkHelper, id, BaseRepresentation.StatusCode.Warning, message);
+    }
+    catch (Exception ex)
+    {
+        Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+       
+        return new <%= it.name %>Representation(LinkHelper, BaseRepresentation.StatusCode.Error, ex.Message + Environment.NewLine + ex.StackTrace);
+    }
+}

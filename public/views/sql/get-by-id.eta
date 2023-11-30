@@ -1,0 +1,3 @@
+select
+<%= it.getColumns(it.columns) + '\n' %>
+from <%= it.name %> where <%=  it.getFilterByID(it.identityColumn) %>;

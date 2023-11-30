@@ -1,0 +1,47 @@
+///<summary>
+/// Get a list of <%= it.pluralName + '\n' %>
+///</summary>
+<% if(it.pagination) { %>
+/// <param name="offset">number of rows to skip</param>
+/// <param name="limit">number of rows per page</param>
+<% } %>
+<% if(it.customQuery) { %>
+/// <param name="searchParams">search parameters</param>
+<% } %>
+/// <response code="200">Returns a list of <%= it.pluralName %></response>
+/// <response code="401">Unauthorized response if token has expired</response>
+/// <response code="304">Forbidden for un authorized roles</response>
+[Route("api/<%= it.getUriSegment(it.pluralName) %><% if(it.pagination) { %>/{offset?}/{limit?}<% } %>", Name = GetAll)]
+[Authorize(Roles = "Administrator,BrandManager")]
+[HttpGet]
+public <%= it.pluralName %>Representation Get(<% if(it.customQuery) { %><%= `${it.name}Search? searchParams, `%><% } %><% if(it.pagination) { %>[FromRoute] int offset = 0, [FromRoute] int limit = 25<% } %>)
+{
+    try
+    {<% if(it.pagination) { %>
+        <%= '\n'%>
+        var baseSearchParams = new <%= it.customQuery ? it.name : "Base" %>SearchParams
+        {
+            CompanyID = CompanyID.GetValueOrDefault(),
+            Offset = offset,
+            Limit = limit + 1
+        };
+<% } %>
+<% if(it.customQuery) { %>
+        <%= '\n'%>
+        if(searchParams is not null)
+        {
+            // assignment
+        }
+<% }%>
+
+        var entities = <%= it.getCamelCaseString(it.name) %>Repository.GetAll(<%= it.pagination ? 'baseSearchParams' : '' %>);
+
+        return new <%= it.pluralName %>Representation(LinkHelper, entities<% if(it.pagination) { %><%= ", offset, limit" %><% }%>);
+    }
+    catch(Exception ex)
+    {
+        Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        
+        return new <%= it.pluralName %>Representation(LinkHelper, BaseRepresentation.StatusCode.Error, ex.Message + Environment.NewLine + ex.StackTrace);
+    }
+}
