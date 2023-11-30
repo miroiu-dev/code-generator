@@ -21,7 +21,7 @@ public class <%= it.name %>Representation : BaseRepresentation
         NotificationStatus = StatusCode.Success;
         id = entity.<%= it.name %>ID;
 <% if(it.customText) { %>
-        <%= it.name %>CustomTexts = customTexts;
+        <%= it.name %>CustomTexts = customTexts.Select(x => new <%= it.name %>CustomTextRepresentation(x)).ToList();
 <% } %>
 <%= it.getAssignmentProperties(it.columns, 2)%>;
 	}

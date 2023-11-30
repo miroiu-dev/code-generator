@@ -22,7 +22,7 @@ public class <%= it.name %>Model
         return new <%= it.name %>
 
         {
-<% if(it.customText) { %>            <%= it.name %>CustomTexts = entity.<%= it.name %>CustomTexts,
+<% if(it.customText) { %>            <%= it.name %>CustomTexts = <%= it.name %>CustomTexts,
 <% } %>
 <%= it.getAssignments(it.columns, 3, ',') %>
 
