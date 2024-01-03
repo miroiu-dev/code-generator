@@ -38,7 +38,7 @@ public class <%= it.pluralName %>Representation : BaseRepresentation
     {
         link = linkHelper;
         Rel = <%= it.pluralName %>Controller.GetAll;
-        <%= it.pluralName %> = entities.Select(x => new <%= it.name %>SummaryRepresentation(link, x)).ToList();
+        <%= it.pluralName %> = entities.Select(x => new <%= it.name %>SummaryRepresentation(link, x)).Take(limit).ToList();
 <% if(it.pagination) { %>
         TotalCount = entities.Count > 0 ? entities.FirstOrDefault()?.TotalCount ?? 0 : 0;
         hasExtraPages = entities.Count > offset;

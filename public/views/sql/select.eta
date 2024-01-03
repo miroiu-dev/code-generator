@@ -2,7 +2,7 @@ select
 <%= it.getColumns(it.columns) %><%= it.pagination ? ',' : ''%>
 
 <% if (it.pagination === true) { %>
-    count(*) as TotalCount
+    count(*) over() as TotalCount
 <% } %>
 from <%= it.name %><%= !it.pagination ? ';' : ''%>
 
